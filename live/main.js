@@ -18,15 +18,18 @@ module.exports.loop = function () {
             tower.attack(closestHostile);
         }
     }
-    
+
     var harvesters = _.filter(Game.creeps, (creep) => creep.memory.role == 'harvester');
-    console.log('Harvesters: ' + harvesters.length);
+    var upgraders = _.filter(Game.creeps, (creep) => creep.memory.role == 'upgrader');
 
     if(harvesters.length < 2) {
         var newName = 'Harvester' + Game.time;
-        console.log('Spawning new harvester: ' + newName);
         Game.spawns['Spawn1'].spawnCreep([WORK,CARRY,MOVE], newName, 
             {memory: {role: 'harvester'}});
+    } else if(upgraders.length < 2) {
+        var newName = 'Upgrader' + Game.time;
+        Game.spawns['Spawn1'].spawnCreep([WORK,CARRY,MOVE], newName, 
+            {memory: {role: 'upgrader'}});
     }
     
     if(Game.spawns['Spawn1'].spawning) { 
