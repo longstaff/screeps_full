@@ -1,24 +1,11 @@
-var roleHarvester = require('role.harvester');
-var roleUpgrader = require('role.upgrader');
-var roleBuilder = require('role.builder');
+var baseColony = require('base.colony');
 
 module.exports.loop = function () {
-
-    var tower = Game.getObjectById('46f93c8d12983b3720242885');
-    if(tower) {
-        var closestDamagedStructure = tower.pos.findClosestByRange(FIND_STRUCTURES, {
-            filter: (structure) => structure.hits < structure.hitsMax
-        });
-        if(closestDamagedStructure) {
-            tower.repair(closestDamagedStructure);
-        }
-
-        var closestHostile = tower.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
-        if(closestHostile) {
-            tower.attack(closestHostile);
-        }
-    }
-
+    Game.spawns.forEach((colony => {
+        baseColony.run(colony);
+    }))
+    
+    /*
     var harvesters = _.filter(Game.creeps, (creep) => creep.memory.role == 'harvester');
     var upgraders = _.filter(Game.creeps, (creep) => creep.memory.role == 'upgrader');
 
@@ -40,7 +27,9 @@ module.exports.loop = function () {
             Game.spawns['Spawn1'].pos.y, 
             {align: 'left', opacity: 0.8});
     }
+    */
 
+    /*
     for(var name in Game.creeps) {
         var creep = Game.creeps[name];
         if(creep.memory.role == 'harvester') {
@@ -53,4 +42,5 @@ module.exports.loop = function () {
             roleBuilder.run(creep);
         }
     }
+    */
 }
