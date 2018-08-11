@@ -21,15 +21,16 @@ const depositEnergy = (creep, spawn) => {
 
 const run = (spawn, creepObj) => {
     //Get energy?
-    if(creepObj.carry.energy < creepObj.energyCapacity) {
+    
+    if(creepObj.carry.energy < creepObj.carryCapacity) {
 
         let steal = false;
         //If you are a miner, dont steal
         if (creepObj.memory.job !== Constants.CREEP_HARVESTER_MINER) {
-            steal = creepUtil.stealFrom(creepObj, target, [Constants.CREEP_HARVESTER, Constants.CREEP_HARVESTER_CARRY, Constants.CREEP_HARVESTER_MINER], Constants.CREEP_HARVESTER_CARRY);
+            steal = creepUtil.stealFrom(creepObj, spawn, [Constants.CREEP_HARVESTER, Constants.CREEP_HARVESTER_CARRY, Constants.CREEP_HARVESTER_MINER], Constants.CREEP_HARVESTER_CARRY);
         }
         
-        if(!steal || creepObj.carry.energy < creepObj.energyCapacity){
+        if(!steal || creepObj.carry.energy < creepObj.carryCapacity){
             if(creepObj.memory.job === Constants.CREEP_HARVESTER_CARRY){
                 //If a carryer, find the closest miner to steal from.
                 var sources = spawn.pos.findInRange(FIND_SOURCES, 10);
@@ -73,7 +74,7 @@ const run = (spawn, creepObj) => {
     } else {
         //If you are a miner, wait for someone to take the energy from you.
         if(creepObj.memory.job !== Constants.CREEP_HARVESTER_MINER){
-            depositEnergy(creepObj, spawn
+            depositEnergy(creepObj, spawn)
         }
     }
 }

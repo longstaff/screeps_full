@@ -1,21 +1,17 @@
 var Constants = require('const');
 
 const isStillAlive = (obj, memoryObj) => {
+
+
     if (obj === undefined) {
-        if(memoryObj.hasSpawned){
-            //Has been spawned, so kill this object
-            return null;
-        }
-        else{
-            //Not spawned yet, so just skip this object
-            return memoryObj;
-        }
+		console.log('OBJ UNDEFINED', obj, memoryObj )
+        return memoryObj.hasSpawned ? null : memoryObj;
     }
     else {
-    	return {
-    		...memoryObj,
+		console.log('OBJ EXTENDED', obj, memoryObj)
+    	return Object.assign({}, memoryObj, {
     		hasSpawned: true
-    	}
+    	})
     }
 }
 
@@ -28,7 +24,7 @@ const stealFrom = (creepObj, target, roleArr, carryRole) => {
                 if (creepsNear[creep].carry.energy > 0 && roleArr.indexOf(creepsNear[creep].memory.role) !== -1 ) {
                     if (
                     	(creepObj.memory.role === carryRole && creepsNear[creep].memory.role !== carryRole) ||
-                    		target.pos.findClosest([creepObj, creepsNear[creep]]) === creepObj) {
+                    		target.pos.findClosestByPath([creepObj, creepsNear[creep]]) === creepObj) {
                         creepsNear[creep].transfer(creepObj, RESOURCE_ENERGY);
                         creepsNear[creep].memory.stolenBy = creepObj.name;
                         creepsNear[creep].cancelOrder("moveTo");
@@ -47,7 +43,7 @@ const stealFrom = (creepObj, target, roleArr, carryRole) => {
     return steal;
 }
 
-const moveToStandby = (creep, target) {
+const moveToStandby = (creep, target) => {
     creep.moveToRoomPosition(target.pos.x+3, target.pos.y, target.room);
 }
 

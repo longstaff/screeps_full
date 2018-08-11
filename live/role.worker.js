@@ -12,10 +12,10 @@ const run = (spawn, creepObj, currentState, buildSites) => {
     if(creepObj.carry.energy === 0){
         creepObj.memory.task = "recharge";
     }
-    else if(creepObj.carry.energy === creepObj.energyCapacity && currentState === Constants.STATE_EXPAND){
+    else if(creepObj.carry.energy === creepObj.carryCapacity && currentState === Constants.STATE_EXPAND){
         creepObj.memory.task = "build";
     }
-    else if(creepObj.carry.energy === creepObj.energyCapacity){
+    else if(creepObj.carry.energy === creepObj.carryCapacity){
         creepObj.memory.task = "store";
     }
 
@@ -29,7 +29,7 @@ const run = (spawn, creepObj, currentState, buildSites) => {
                 }
             });
             if(sources.length){
-                creepObj.moveToRoomObject(sources[0]);
+                creepObj.moveTo(sources[0]);
                 for(var source in sources){
                     creepObj.transfer(sources, RESOURCE_ENERGY[source]);
                 }
@@ -46,7 +46,7 @@ const run = (spawn, creepObj, currentState, buildSites) => {
             var repairTarget;
 
             if(buildSites.length > 0){
-                creepObj.moveToRoomObject(buildSites[0]);
+                creepObj.moveTo(buildSites[0]);
                 var result = creepObj.build(buildSites[0]);
                 if(result === -14){
                     spawn.memory.notYet.push(buildSites[0].id);
@@ -100,7 +100,7 @@ const run = (spawn, creepObj, currentState, buildSites) => {
 
             //If there is a target, fix it!
             if(repairTarget){
-                creepObj.moveToRoomObject(repairTarget);
+                creepObj.moveTo(repairTarget);
                 creepObj.repair(repairTarget);
                 repairing = true;
             }
@@ -116,15 +116,15 @@ const run = (spawn, creepObj, currentState, buildSites) => {
     else {
         creepObj.memory.givingEnergy = null;
 
-        if(!steal || creepObj.carry.energy < creepObj.energyCapacity){
+        if(!steal || creepObj.carry.energy < creepObj.carryCapacity){
             if(spawn.energyCapacity){
                 if(spawn.energy === 0 || currentState === Constants.STATE_DEFENCE || currentState === Constants.STATE_HARVEST){
                     creepObj.moveToRoomPosition(spawn.pos.x+3, spawn.pos.y, spawn.room);
                 }
                 else{
-                    creepObj.moveToRoomObject(spawn);
+                    creepObj.moveTo(spawn);
                     if(currentState !== Constants.STATE_DEFENCE && currentState !== Constants.STATE_HARVEST){
-                        spawn.transfer(creepObj, RESOURCE_ENERGY);
+                        spawn.transferEnergy(creepObj);
                     }
                 }
             }
@@ -133,16 +133,16 @@ const run = (spawn, creepObj, currentState, buildSites) => {
                     creepObj.moveToRoomPosition(spawn.pos.x+3, spawn.pos.y, spawn.room);
                 }
                 else{
-                    creepObj.moveToRoomObject(spawn);
+                    creepObj.moveTo(spawn);
                     if(currentState !== Constants.STATE_DEFENCE && currentState !== Constants.STATE_HARVEST){
-                        spawn.transfer(creepObj, RESOURCE_ENERGY);
+                        spawn.transferEnergy(creepObj);
                     }
                 }
             }
         }
         else{
             if(buildSites.length > 0){
-                creepObj.moveToRoomObject(buildSites[0]);
+                creepObj.moveTo(buildSites[0]);
                 var result = creepObj.build(buildSites[0]);
                 if(result === -14){
                     spawn.memory.notYet.push(buildSites[0].id);
@@ -150,7 +150,7 @@ const run = (spawn, creepObj, currentState, buildSites) => {
             }
             else{
                 var controller = spawn.room.controller ? spawn.room.controller : spawn.room.controller;
-                creepObj.moveToRoomObject(controller);
+                creepObj.moveTo(controller);
             }
         }
 
