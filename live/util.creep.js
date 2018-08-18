@@ -65,11 +65,9 @@ const countCreeps = (creeps) => {
 
 const isStillAlive = (obj, memoryObj) => {
     if (obj === undefined) {
-		console.log('OBJ UNDEFINED', obj, memoryObj )
         return memoryObj.hasSpawned ? null : memoryObj;
     }
     else {
-		console.log('OBJ EXTENDED', obj, memoryObj)
     	return Object.assign({}, memoryObj, {
     		hasSpawned: true
     	})
@@ -88,7 +86,6 @@ const stealFrom = (creepObj, target, roleArr, carryRole) => {
                     		target.pos.findClosestByPath([creepObj, creepsNear[creep]]) === creepObj) {
                         creepsNear[creep].transfer(creepObj, RESOURCE_ENERGY);
                         creepsNear[creep].memory.stolenBy = creepObj.name;
-                        creepsNear[creep].cancelOrder("moveTo");
                         steal = true;
                         if(creepObj.carry.energy === creepObj.energyCapacity){
                             break;

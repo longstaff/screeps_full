@@ -1,4 +1,5 @@
 const Harvester = require('role.harvester');
+const Worker = require('role.worker');
 const Constants = require('const');
 
 const Colony = require('base.colony');
@@ -14,16 +15,16 @@ const init = (spawn) => {
     if (!spawn.memory.creeps) spawn.memory.creeps = [];
     if (!spawn.memory.controlLevel) spawn.memory.controlLevel = 0;
     if (!spawn.memory.colonies) {
-        const sources = origin.room.find(FIND_SOURCES);
+        const sources = spawn.room.find(FIND_SOURCES);
         const sorted = sources
             .map(source => ({
-                source: source.id,
-                range: spawn.getRangeTo(source)
+                source,
+                range: spawn.pos.getRangeTo(source)
             }))
             .sort((a,b) => a.range - b.range)
             .map(range => range.source);
 
-        spawn.memory.colonies = sorted.map((source, ind) => spawn.room.createFlag(source.pos, `${source.room.name} colony ${ind}`)
+        spawn.memory.colonies = sorted.map((source, ind) => spawn.room.createFlag(source.pos, `${spawn.room.name} colony ${ind}`))
     }
 }
 
@@ -36,10 +37,12 @@ const runColonies = (spawn, extensionCount) => {
     const contLevel = spawn.room.controller.level;
 
     const output = spawn.memory.colonies.map(flagName => {
-        Colony(Game.flags[flagName], creepMaker, extensionCount, contLevel);
+        if(Game.flags[flagName])
+            return Colony.run(Game.flags[flagName], creepMaker, extensionCount, contLevel);
+        else return Constants.STATE_EXPAND
     })
 
-    return output.every(resp => resp === Constants.STATE_EXPAND) ? STATE_EXPAND : STATE_BUILD
+    return output.every(resp => resp === Constants.STATE_EXPAND) ? Constants.STATE_EXPAND : Constants.STATE_BUILD
 }
 
 const generateBuildSites = (spawn) => {
@@ -71,6 +74,7 @@ const getBuildSites = spawn => spawn.room.find(FIND_CONSTRUCTION_SITES,
     }
 )
 
+
 const getState = (spawn, creeps, buildSites, outpostState) => {
     if(outpostState === Constants.STATE_BUILD){
         return Constants.STATE_HARVEST;
@@ -95,11 +99,6 @@ const generateNewCreep = (spawn, currentState, creeps, creepsList, extensionCoun
                     
         switch(currentState){
             case Constants.STATE_EXPAND:
-                if(spawn.room.controller){
-                    const newCreep = CreepMaker.makeWorkerCreep(spawn, extensionCount);
-                    return newCreep ? creepsList.concat([newCreep]) : creepsList;
-                }
-                else return creepsList;
             case Constants.STATE_SPREAD:
             case Constants.STATE_STORE:
                 if(extensionCount === 0 && creeps.workerCreeps < 2){
@@ -112,7 +111,7 @@ const generateNewCreep = (spawn, currentState, creeps, creepsList, extensionCoun
                     const newCreep = CreepMaker.makeWorkerMinerCreep(spawn, extensionCount);
                     return newCreep ? creepsList.concat([newCreep]) : creepsList;
                 }
-                else{
+                else if(creeps.workerCarryCreeps < 2){
                     //The rest are carrying energy
                     const newCreep = CreepMaker.makeWorkerCarryCreep(spawn, extensionCount);
                     return newCreep ? creepsList.concat([newCreep]) : creepsList;
@@ -144,8 +143,8 @@ const run = (spawn) => {
     const outpostState = runColonies(spawn, extensionCount);
     generateBuildSites(spawn);
     
-    spawn.memory.creeps = checkCreepStatus(spawn.memory.creeps);
-    const creeps = countCreeps(spawn.memory.creeps);
+    spawn.memory.creeps = creepUtil.checkCreepStatus(spawn.memory.creeps);
+    const creeps = creepUtil.countCreeps(spawn.memory.creeps);
     
     var buildSites = getBuildSites(spawn);
 

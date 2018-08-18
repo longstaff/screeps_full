@@ -22,13 +22,15 @@ const getState = (flag, creeps) => {
 }
 
 const generateNewCreep = (creepMaker, currentState, creepsCounts, creepsList, extensionCount, controllerLevel) => {
+    const extension = (creepsCounts.harvesterMinerCreeps + creepsCounts.harvesterMinerCreeps < 1) ? 0 : extensionCount;
+    
     if (currentState === Constants.STATE_BUILD) {
-        if (extensionCount === 0 && creepsCounts.harvesterCreeps < 1) {
+        if (extension === 0 && creepsCounts.harvesterCreeps < 1) {
             //Generic ones to start you off
             const newCreep = creepMaker.makeHarvesterCreep();
             return newCreep ? creepsList.concat([newCreep]) : creepsList;
         }
-        else if ((extensionCount === 0 && creepsCounts.harvesterMinerCreeps < 2) || (extensionCount > 0 && creepsCounts.harvesterMinerCreeps + creepsCounts.harvesterMinerCreeps < 3)) {
+        else if (creepsCounts.harvesterMinerCreeps < 2) {
             //A couple of miners
             const newCreep = creepMaker.makeHarvesterMinerCreep();
             return newCreep ? creepsList.concat([newCreep]) : creepsList;
@@ -47,8 +49,9 @@ const run = (flag, creepMaker, extensionCount, controllerLevel, lentcreeps = [])
     
     flag.memory.creeps = creepUtil.checkCreepStatus(flag.memory.creeps);
     const creeps = creepUtil.countCreeps(flag.memory.creeps);
+    const currentState = getState(flag, creeps);
     
-    flag.memory.creeps = generateNewCreep(creepMaker, creeps, flag.memory.creeps, extensionCount, controllerLevel);
+    flag.memory.creeps = generateNewCreep(creepMaker, currentState, creeps, flag.memory.creeps, extensionCount, controllerLevel);
 
     //Tell creeps to do something
     const allCreeps = lentcreeps.concat(flag.memory.creeps).map(creep => {
@@ -71,9 +74,6 @@ const run = (flag, creepMaker, extensionCount, controllerLevel, lentcreeps = [])
         }
     })
     allCreeps.forEach(creepObj => {
-        var creepObj = Game.creeps[creep.name];
-        if (!creepObj) return;
-
         if(creepObj.memory.role === Constants.CREEP_HARVESTER ||
             creepObj.memory.role === Constants.CREEP_HARVESTER_MINER ||
             creepObj.memory.role === Constants.CREEP_HARVESTER_CARRY) {
@@ -81,7 +81,7 @@ const run = (flag, creepMaker, extensionCount, controllerLevel, lentcreeps = [])
         }
     })
 
-    return getState(flag, creeps);
+    return currentState;
 }
 
 module.exports = {

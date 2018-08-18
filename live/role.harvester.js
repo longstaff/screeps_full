@@ -28,11 +28,11 @@ const depositEnergy = (creep, origin) => {
     //Store the target it memory to save searching the room every tick
     if (creep.memory.target && creep.memory.targetRefresh < TARGET_REFRESH_TICKS) {
         target = Game.getObjectById(creep.memory.target);
-        creep.targetRefresh ++;
+        creep.memory.targetRefresh ++;
     }
     //If nothing stored or refresh hit, look for something new
     if (!target) {
-        target = getDepositTarget(origin);
+        target = getDepositTarget(creep, origin);
         creep.memory.target = target ? target.id : null;
         creep.memory.targetRefresh = 0;
     }
@@ -56,13 +56,15 @@ const getEnergyTarget = (origin) => {
 
     if (!origin.memory.source) {
         var sources = origin.pos.findInRange(FIND_SOURCES, 2);
-        origin.memory.source = sources[0];
+        origin.memory.source = sources[0].id;
     }
-
+    
     return Game.getObjectById(origin.memory.source);
 }
-const getEnergyScreep = (creep) => {
-    var closest = getEnergyTarget().pos.findInRange(FIND_MY_CREEPS, 2, {
+const getEnergyScreep = (creep, origin) => {
+    let target;
+    
+    var closest = getEnergyTarget(origin).pos.findInRange(FIND_MY_CREEPS, 2, {
         filter: function(i) {
             return (i.memory.role === Constants.CREEP_HARVESTER_MINER || i.memory.role === Constants.CREEP_HARVESTER);
         }
@@ -80,11 +82,13 @@ const getEnergyScreep = (creep) => {
 
         if (most) target = most;
     }
+    
+    return target;
 }
 
 const getEnergy = (creep, origin) => {
     let target = null;
-
+    
     //Store static target in memory to save searching the room every tick
     if (creep.memory.target && creep.memory.targetRefresh < TARGET_REFRESH_TICKS) {
         target = Game.getObjectById(creep.memory.target);
@@ -92,7 +96,7 @@ const getEnergy = (creep, origin) => {
     }
     //If nothing stored or refresh hit, look for something new
     if (!target) {
-        if (creep.memory.role === Constants.CREEP_HARVESTER_CARRY) target = getEnergyScreep(origin);
+        if (creep.memory.role === Constants.CREEP_HARVESTER_CARRY) target = getEnergyScreep(creep, origin);
         else target = getEnergyTarget(origin);
 
         creep.memory.target = target ? target.id : null;
@@ -106,7 +110,7 @@ const getEnergy = (creep, origin) => {
     else {
         //Get from target
         let resp;
-
+    
         if (creep.memory.role !== Constants.CREEP_HARVESTER_CARRY) {
             resp = creep.harvest(target);
         }
@@ -120,21 +124,21 @@ const getEnergy = (creep, origin) => {
 const prerun = (origin, creep) => {
     //Everyone takes what they can!
     if (creep.memory.role !== Constants.CREEP_HARVESTER_MINER) {
-        steal = creepUtil.stealFrom(creep, origin, [Constants.CREEP_HARVESTER, Constants.CREEP_HARVESTER_CARRY, Constants.CREEP_HARVESTER_MINER], Constants.CREEP_HARVESTER_CARRY);
+        const sink = getDepositTarget(creep, origin);
+        creepUtil.stealFrom(creep, sink ? sink : origin, [Constants.CREEP_HARVESTER, Constants.CREEP_HARVESTER_CARRY, Constants.CREEP_HARVESTER_MINER], Constants.CREEP_HARVESTER_CARRY);
     }
 }
 const run = (origin, creep) => {
-    //Everyone takes what they can?
-    if (creep.memory.role !== Constants.CREEP_HARVESTER_MINER) {
-        steal = creepUtil.stealFrom(creep, origin, [Constants.CREEP_HARVESTER, Constants.CREEP_HARVESTER_CARRY, Constants.CREEP_HARVESTER_MINER], Constants.CREEP_HARVESTER_CARRY);
-    }
-
     if (creep.carry.energy === 0) {
-        creep.memory.action = 'HARVEST';
-        creep.memory.target = null;
+        if (creep.memory.action !=='HARVEST') {
+            creep.memory.action = 'HARVEST';
+            creep.memory.target = null;
+        }
     } else if (creep.carry.energy === creep.carryCapacity && creep.memory.role !== Constants.CREEP_HARVESTER_MINER) {
-        creep.memory.action = 'DEPOSIT';
-        creep.memory.target = null;
+        if (creep.memory.action !=='DEPOSIT') {
+            creep.memory.action = 'DEPOSIT';
+            creep.memory.target = null;
+        }
     }
 
     if (creep.memory.action === 'DEPOSIT') {

@@ -1,9 +1,11 @@
-var Constants = require('const');
+const Constants = require('const');
 const creepUtil = require('util.creep');
 
 const TARGET_REFRESH_TICKS = 10;
 
 const giveEnergy = (creep, origin) => {
+    let target = null;
+    
     //Store the target it memory to save searching the room every tick
     if (creep.memory.target && creep.memory.targetRefresh < TARGET_REFRESH_TICKS) {
         target = Game.getObjectById(creep.memory.target);
@@ -13,11 +15,11 @@ const giveEnergy = (creep, origin) => {
     if (!target) {
         //find the closest miner to give to.
         var sources = origin.room.find(FIND_MY_CREEPS, {
-            filter:function(i){
+            filter: function(i) {
                 return (i.memory.role === Constants.CREEP_WORKER_MINER || i.memory.role === Constants.CREEP_WORKER) && i.carry.energy < i.carryCapacity;
             }
         });
-        target = sources.length ? sources[0];
+        target = sources.length ? sources[0] : null;
         creep.memory.target = target ? target.id : null;
         creep.memory.targetRefresh = 0;
     }
@@ -36,7 +38,7 @@ const giveEnergy = (creep, origin) => {
     }
 }
 
-buildStructure = (creep, origin, buildSites) => {
+const buildStructure = (creep, origin, buildSites) => {
     var result = creep.build(buildSites[0]);
 
     if(result === ERR_NOT_IN_RANGE) {
@@ -47,12 +49,12 @@ buildStructure = (creep, origin, buildSites) => {
 //    }
 }
 
-upgradeController = (creep, origin) => {
+const upgradeController = (creep, origin) => {
     if (creep.upgradeController(creep.room.controller) == ERR_NOT_IN_RANGE) {
         creep.moveTo(creep.room.controller, {visualizePathStyle: {stroke: '#ffffff'}});
     }
 }
-getEnergy = (creep, origin, currentState) => {
+const getEnergy = (creep, origin, currentState) => {
     let target = null;
 
     //Test if there is a source, should be link
@@ -63,7 +65,7 @@ getEnergy = (creep, origin, currentState) => {
         const targets = origin.room.find(FIND_STRUCTURES, {
             filter: (structure) => {
                 return (structure.structureType === STRUCTURE_EXTENSION || structure.structureType === STRUCTURE_STORAGE || structure.structureType === STRUCTURE_SPAWN) &&
-                    structure.energy > 0;
+                    structure.energy > 1;
             }
         });       
         target = targets.length ? targets[0] : null;
@@ -78,7 +80,7 @@ getEnergy = (creep, origin, currentState) => {
         creep.withdraw(target, RESOURCE_ENERGY);
     }
 }
-returnEnergy = (creep, origin) => {
+const returnEnergy = (creep, origin) => {
     const targets = origin.room.find(FIND_STRUCTURES, {
         filter: (structure) => {
             return (structure.structureType === STRUCTURE_EXTENSION || structure.structureType === STRUCTURE_STORAGE || structure.structureType === STRUCTURE_SPAWN) &&
@@ -101,10 +103,12 @@ returnEnergy = (creep, origin) => {
 
 const prerun = (origin, creep, currentState, buildSites) => {
     //Everyone takes what they can!
+    const target = buildSites.length ? buildSites[0] : creep.room.controller;
     if(creep.memory.role !== Constants.CREEP_WORKER_CARRY && creep.carry.energy === 0){
         creepUtil.stealFrom(creep, target, [Constants.CREEP_HARVESTER, Constants.CREEP_HARVESTER_CARRY, Constants.CREEP_WORKER, Constants.CREEP_WORKER_CARRY], Constants.CREEP_WORKER_CARRY);
     }
 }
+
 const run = (origin, creep, currentState, buildSites) => {
     var target = buildSites.length > 0 ? buildSites[0] : origin.room.controller;
 
@@ -118,6 +122,7 @@ const run = (origin, creep, currentState, buildSites) => {
         creep.memory.task = "store";
     }
 
+
     else if (creep.memory.role === Constants.CREEP_WORKER_CARRY && currentState === Constants.STATE_DEFENCE || currentState === Constants.STATE_HARVEST) {
         returnEnergy(creep, origin);
     }
@@ -130,7 +135,7 @@ const run = (origin, creep, currentState, buildSites) => {
     else if (creep.memory.task === "store") {
         upgradeController(creep, origin);
     }
-    else {
+    else if(creep.memory.role !== Constants.CREEP_WORKER_MINER) {
         getEnergy(creep, origin);
     }
 }
@@ -138,7 +143,7 @@ const run = (origin, creep, currentState, buildSites) => {
 const postrun = (origin, creep, currentState, buildSites) => {}
 
 module.exports = {
-    prerun
-    run
-    postrun
+    prerun,
+    run,
+    postrun,
 }
