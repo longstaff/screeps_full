@@ -1,7 +1,7 @@
-const baseColony = require('base.colony');
+const baseCore = require('base.core');
 
 module.exports.loop = function () {
-    Object.values(Game.spawns).forEach((colony => {
-        baseColony.run(colony);
+    Object.values(Game.spawns).forEach((core => {
+        baseCore.run(core);
     }))
 }

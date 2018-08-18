@@ -1,84 +1,153 @@
 const Constants = require('const');
 const creepUtil = require('util.creep');
 
-const depositEnergy = (creep, spawn) => {
-    const targets = creep.room.find(FIND_STRUCTURES, {
-        filter: (structure) => {
-            return (structure.structureType == STRUCTURE_EXTENSION || structure.structureType == STRUCTURE_SPAWN) &&
-                structure.energy < structure.energyCapacity;
+const TARGET_REFRESH_TICKS = 10;
+
+const getDepositTarget = (creep, origin) => {
+    let target = null;
+
+    // Sink for energy, should be a link structure or similar
+    if (origin.memory.sink) target = Game.getObjectById(origin.memory.sink);
+
+    // Else look for a storage element in the room that has space
+    if (!target) {
+        const targets = origin.room.find(FIND_STRUCTURES, {
+            filter: (structure) => {
+                return (structure.structureType === STRUCTURE_EXTENSION || structure.structureType === STRUCTURE_STORAGE || structure.structureType === STRUCTURE_SPAWN) &&
+                    structure.energy < structure.energyCapacity;
+            }
+        });       
+        target = targets.length ? targets[0] : null; 
+    }
+
+    return target;
+}
+const depositEnergy = (creep, origin) => {
+    let target = null;
+
+    //Store the target it memory to save searching the room every tick
+    if (creep.memory.target && creep.memory.targetRefresh < TARGET_REFRESH_TICKS) {
+        target = Game.getObjectById(creep.memory.target);
+        creep.targetRefresh ++;
+    }
+    //If nothing stored or refresh hit, look for something new
+    if (!target) {
+        target = getDepositTarget(origin);
+        creep.memory.target = target ? target.id : null;
+        creep.memory.targetRefresh = 0;
+    }
+
+    //If nothing, wait for something to be free
+    if (!target){
+        creepUtil.moveToStandby(creep, origin);
+    }
+    else { //Put it somewhere
+        const resp = creep.transfer(target, RESOURCE_ENERGY);
+        if (resp === ERR_NOT_IN_RANGE) {
+            creep.moveTo(target, {visualizePathStyle: {stroke: '#ffffff'}});
+        } else if (resp === ERR_FULL) {
+            creep.memory.target = null;
+        }
+    }
+}
+
+const getEnergyTarget = (origin) => {
+    let target = null;
+
+    if (!origin.memory.source) {
+        var sources = origin.pos.findInRange(FIND_SOURCES, 2);
+        origin.memory.source = sources[0];
+    }
+
+    return Game.getObjectById(origin.memory.source);
+}
+const getEnergyScreep = (creep) => {
+    var closest = getEnergyTarget().pos.findInRange(FIND_MY_CREEPS, 2, {
+        filter: function(i) {
+            return (i.memory.role === Constants.CREEP_HARVESTER_MINER || i.memory.role === Constants.CREEP_HARVESTER);
         }
     });
     
-    if(targets.length === 0){
-        creepUtil.moveToStandby(creep, spawn);
+    if (closest.length) {
+        var most;
+        var mostEn = 0;
+        for (var close in closest) {
+            if (closest[close].carry.energy > mostEn) {
+                mostEn = closest[close].carry.energy > mostEn;
+                most = closest[close];
+            }
+        }
+
+        if (most) target = most;
     }
-    else{
-        if(creep.transfer(targets[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-            creep.moveTo(targets[0], {visualizePathStyle: {stroke: '#ffffff'}});
+}
+
+const getEnergy = (creep, origin) => {
+    let target = null;
+
+    //Store static target in memory to save searching the room every tick
+    if (creep.memory.target && creep.memory.targetRefresh < TARGET_REFRESH_TICKS) {
+        target = Game.getObjectById(creep.memory.target);
+        creep.targetRefresh ++;
+    }
+    //If nothing stored or refresh hit, look for something new
+    if (!target) {
+        if (creep.memory.role === Constants.CREEP_HARVESTER_CARRY) target = getEnergyScreep(origin);
+        else target = getEnergyTarget(origin);
+
+        creep.memory.target = target ? target.id : null;
+        creep.memory.targetRefresh = 0;
+    }
+
+    //If nothing, wait for something to be free
+    if (!target) {
+        creepUtil.moveToStandby(creep, origin);
+    }
+    else {
+        //Get from target
+        let resp;
+
+        if (creep.memory.role !== Constants.CREEP_HARVESTER_CARRY) {
+            resp = creep.harvest(target);
+        }
+
+        if (resp === ERR_NOT_IN_RANGE || creep.memory.role === Constants.CREEP_HARVESTER_CARRY) {
+            creep.moveTo(target, {visualizePathStyle: {stroke: '#ffffff'}});
         }
     }
 }
 
-const run = (spawn, creepObj) => {
-    //Get energy?
-    
-    if(creepObj.carry.energy < creepObj.carryCapacity) {
-
-        let steal = false;
-        //If you are a miner, dont steal
-        if (creepObj.memory.job !== Constants.CREEP_HARVESTER_MINER) {
-            steal = creepUtil.stealFrom(creepObj, spawn, [Constants.CREEP_HARVESTER, Constants.CREEP_HARVESTER_CARRY, Constants.CREEP_HARVESTER_MINER], Constants.CREEP_HARVESTER_CARRY);
-        }
-        
-        if(!steal || creepObj.carry.energy < creepObj.carryCapacity){
-            if(creepObj.memory.job === Constants.CREEP_HARVESTER_CARRY){
-                //If a carryer, find the closest miner to steal from.
-                var sources = spawn.pos.findInRange(FIND_SOURCES, 10);
-                var closest = sources[0].pos.findInRange(FIND_MY_CREEPS, 2, {
-                    filter: function(i) {
-                        return (i.memory.job === Constants.CREEP_HARVESTER_MINER || i.memory.job === Constants.CREEP_HARVESTER);
-                    }
-                });
-                
-                if (closest.length) {
-                    var most;
-                    var mostEn = 0;
-                    for (var close in closest) {
-                        if (closest[close].carry.energy > mostEn) {
-                            mostEn = closest[close].carry.energy > mostEn;
-                            most = closest[close];
-                        }
-                    }
-                    
-                    if(most){
-                        creepObj.moveTo(most);
-                        most.transfer(creepObj, RESOURCE_ENERGY);
-                    } else{
-                        creepUtil.moveToStandby(creep, spawn);
-                    }
-                } else {
-                    creepUtil.moveToStandby(creep, spawn);
-                }
-            } else {
-                //Else harvest if you can.
-                var sources = spawn.pos.findInRange(FIND_SOURCES, 10);
-                creepObj.moveTo(sources[0]);
-                creepObj.harvest(sources[0]);
-            }
-        } else {
-            //If you are a miner, wait for someone to take the energy from you.
-            if(creepObj.memory.job !== Constants.CREEP_HARVESTER_MINER){
-                depositEnergy(creepObj, spawn)
-            }
-        }
-    } else {
-        //If you are a miner, wait for someone to take the energy from you.
-        if(creepObj.memory.job !== Constants.CREEP_HARVESTER_MINER){
-            depositEnergy(creepObj, spawn)
-        }
+const prerun = (origin, creep) => {
+    //Everyone takes what they can!
+    if (creep.memory.role !== Constants.CREEP_HARVESTER_MINER) {
+        steal = creepUtil.stealFrom(creep, origin, [Constants.CREEP_HARVESTER, Constants.CREEP_HARVESTER_CARRY, Constants.CREEP_HARVESTER_MINER], Constants.CREEP_HARVESTER_CARRY);
     }
 }
+const run = (origin, creep) => {
+    //Everyone takes what they can?
+    if (creep.memory.role !== Constants.CREEP_HARVESTER_MINER) {
+        steal = creepUtil.stealFrom(creep, origin, [Constants.CREEP_HARVESTER, Constants.CREEP_HARVESTER_CARRY, Constants.CREEP_HARVESTER_MINER], Constants.CREEP_HARVESTER_CARRY);
+    }
+
+    if (creep.carry.energy === 0) {
+        creep.memory.action = 'HARVEST';
+        creep.memory.target = null;
+    } else if (creep.carry.energy === creep.carryCapacity && creep.memory.role !== Constants.CREEP_HARVESTER_MINER) {
+        creep.memory.action = 'DEPOSIT';
+        creep.memory.target = null;
+    }
+
+    if (creep.memory.action === 'DEPOSIT') {
+        depositEnergy(creep, origin);
+    }
+    else {
+        getEnergy(creep, origin);
+    }
+}
+const postrun = (origin, creep) => {}
 
 module.exports = {
-    run
+    prerun,
+    run,
+    postrun
 }

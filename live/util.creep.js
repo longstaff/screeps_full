@@ -1,8 +1,69 @@
 var Constants = require('const');
 
+const checkCreepStatus = (creeps) => {
+    return creeps.map(creep => {
+        if(creep === null) return null;
+        var creepObj = Game.creeps[creep.name];
+        return isStillAlive(creepObj, creep);
+    }).filter(creep => creep !== null);
+}
+
+const countCreeps = (creeps) => {
+    const tally = {
+        defenceCreeps: 0,
+        offenceCreeps: 0,
+        workerCreeps: 0,
+        workerMinerCreeps: 0,
+        workerCarryCreeps: 0,
+        harvesterCreeps: 0,
+        harvesterMinerCreeps: 0,
+        harvesterCarryCreeps: 0,
+        totalCreeps: 0,
+    };
+
+    creeps.forEach(creep => {
+        var creepObj = Game.creeps[creep.name];
+        if(!creepObj) return;
+        switch (creepObj.memory.role) {
+            case Constants.CREEP_DEFENCE:
+                tally.defenceCreeps ++;
+                tally.totalCreeps ++;
+                break;
+            case Constants.CREEP_OFFENCE:
+                tally.offenceCreeps ++;
+                tally.totalCreeps ++;
+                break;
+            case Constants.CREEP_WORKER:
+                tally.workerCreeps ++;
+                tally.totalCreeps ++;
+                break;
+            case Constants.CREEP_WORKER_MINER:
+                tally.workerMinerCreeps ++;
+                tally.totalCreeps ++;
+                break;
+            case Constants.CREEP_WORKER_CARRY:
+                tally.workerCarryCreeps ++;
+                tally.totalCreeps ++;
+                break;
+            case Constants.CREEP_HARVESTER:
+                tally.harvesterCreeps ++;
+                tally.totalCreeps ++;
+                break;
+            case Constants.CREEP_HARVESTER_MINER:
+                tally.harvesterMinerCreeps ++;
+                tally.totalCreeps ++;
+                break;
+            case Constants.CREEP_HARVESTER_CARRY:
+                tally.harvesterCarryCreeps ++;
+                tally.totalCreeps ++;
+                break;
+        }
+    })
+
+    return tally;
+}
+
 const isStillAlive = (obj, memoryObj) => {
-
-
     if (obj === undefined) {
 		console.log('OBJ UNDEFINED', obj, memoryObj )
         return memoryObj.hasSpawned ? null : memoryObj;
@@ -44,10 +105,12 @@ const stealFrom = (creepObj, target, roleArr, carryRole) => {
 }
 
 const moveToStandby = (creep, target) => {
-    creep.moveToRoomPosition(target.pos.x+3, target.pos.y, target.room);
+    creep.moveTo(new RoomPosition(target.pos.x+3, target.pos.y, target.pos.roomName));
 }
 
 module.exports = {
+    checkCreepStatus,
+    countCreeps,
     isStillAlive,
     stealFrom,
     moveToStandby,
