@@ -41,7 +41,7 @@ const giveEnergy = (creep, origin) => {
 const buildStructure = (creep, origin, buildSites) => {
     var result = creep.build(buildSites[0]);
 
-    if(result === ERR_NOT_IN_RANGE) {
+    if (result === ERR_NOT_IN_RANGE || result === ERR_NOT_ENOUGH_ENERGY) {
         creep.moveTo(buildSites[0]);
     }
 //    if(result === -14){
@@ -112,10 +112,10 @@ const prerun = (origin, creep, currentState, buildSites) => {
 const run = (origin, creep, currentState, buildSites) => {
     var target = buildSites.length > 0 ? buildSites[0] : origin.room.controller;
 
-    if(creep.carry.energy === 0){
+    if(creep.memory.role !== Constants.CREEP_WORKER_MINER && creep.carry.energy === 0){
         creep.memory.task = "recharge";
     }
-    else if(creep.carry.energy === creep.carryCapacity && buildSites.length && origin.room.controller.ticksToDowngrade > 1000){
+    else if(buildSites.length && origin.room.controller.ticksToDowngrade > 1000){
         creep.memory.task = "build";
     }
     else if(creep.carry.energy === creep.carryCapacity){
