@@ -13,12 +13,23 @@ const giveEnergy = (creep, origin) => {
     }
     //If nothing stored or refresh hit, look for something new
     if (!target) {
-        //find the closest miner to give to.
+        //find a miner to give to.
         var sources = origin.room.find(FIND_MY_CREEPS, {
             filter: function(i) {
-                return (i.memory.role === Constants.CREEP_WORKER_MINER || i.memory.role === Constants.CREEP_WORKER) && i.carry.energy < i.carryCapacity;
+                return (i.memory.role === Constants.CREEP_WORKER_MINER) && i.carry.energy < i.carryCapacity;
             }
         });
+        //else use the workers
+        if(!sources.length) {
+            sources = origin.room.find(FIND_MY_CREEPS, {
+                filter: function(i) {
+                    return (i.memory.role === Constants.CREEP_WORKER) && i.carry.energy < i.carryCapacity;
+                }
+            });
+        }
+        //Sort by need
+        sources.sort((a, b) => a.carry.energy - b.carry.energy);
+        
         target = sources.length ? sources[0] : null;
         creep.memory.target = target ? target.id : null;
         creep.memory.targetRefresh = 0;
@@ -28,7 +39,7 @@ const giveEnergy = (creep, origin) => {
         const resp = creep.transfer(target, RESOURCE_ENERGY);
         if (resp === ERR_NOT_IN_RANGE) {
             creep.moveTo(target, {visualizePathStyle: {stroke: '#ccc'}});
-        } else if (resp === ERR_FULL) {
+        } else if (resp === OK || resp === ERR_FULL) {
             creep.memory.target = null;
         }
     }

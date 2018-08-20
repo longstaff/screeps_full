@@ -112,15 +112,15 @@ function makeWorkerMinerCreep(spawn, extensionCount){
 	if(typeof(creep) === "string") return ({name: creep});
 }
 function makeWorkerCarryCreep(spawn, extensionCount){
-	var array = [CARRY, CARRY, CARRY, MOVE, MOVE];
+	var array = [CARRY, CARRY, CARRY, MOVE, MOVE, MOVE];
 	if(extensionCount > 15){
-		array = [CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE];
+		array = [CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE];
 	}
 	if(extensionCount > 9){
-		array = [CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE];
+		array = [CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE];
 	}
 	if(extensionCount > 4){
-		array = [CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE];
+		array = [CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE];
 	}
 	var creep = spawn.createCreep(array, undefined, {role:Constants.CREEP_WORKER_CARRY});
 	if(typeof(creep) === "string") return ({name: creep});

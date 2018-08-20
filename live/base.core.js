@@ -30,9 +30,9 @@ const init = (spawn) => {
 
 const runColonies = (spawn, extensionCount) => {
     const creepMaker = {
-        makeHarvesterCreep: CreepMaker.makeHarvesterCreep.bind(this, spawn, extensionCount),
-        makeHarvesterMinerCreep: CreepMaker.makeHarvesterMinerCreep.bind(this, spawn, extensionCount),
-        makeHarvesterCarryCreep: CreepMaker.makeHarvesterCarryCreep.bind(this, spawn, extensionCount),
+        makeHarvesterCreep: CreepMaker.makeHarvesterCreep.bind(this, spawn),
+        makeHarvesterMinerCreep: CreepMaker.makeHarvesterMinerCreep.bind(this, spawn),
+        makeHarvesterCarryCreep: CreepMaker.makeHarvesterCarryCreep.bind(this, spawn),
     }
     const contLevel = spawn.room.controller.level;
 
@@ -111,7 +111,7 @@ const generateNewCreep = (spawn, currentState, creeps, creepsList, extensionCoun
                     const newCreep = CreepMaker.makeWorkerMinerCreep(spawn, extensionCount);
                     return newCreep ? creepsList.concat([newCreep]) : creepsList;
                 }
-                else if(creeps.workerCarryCreeps < 2){
+                else if(creeps.workerCarryCreeps < 3){
                     //The rest are carrying energy
                     const newCreep = CreepMaker.makeWorkerCarryCreep(spawn, extensionCount);
                     return newCreep ? creepsList.concat([newCreep]) : creepsList;
