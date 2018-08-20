@@ -137,7 +137,7 @@ const run = (spawn) => {
     init(spawn);
 
     const extensionCount = spawn.room.find(FIND_MY_STRUCTURES, {
-        filter: { structureType: STRUCTURE_EXTENSION }
+        filter: struct => struct.structureType === STRUCTURE_EXTENSION && struct.isActive()
     }).length;
 
     const outpostState = runColonies(spawn, extensionCount);

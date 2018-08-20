@@ -52,6 +52,7 @@ function makeHarvesterCreep(spawn, extensionCount){
 	if(extensionCount > 4){
 		array = [WORK, WORK, CARRY, MOVE, MOVE];
 	}
+	
 	var creep = spawn.createCreep(array, undefined, {role:Constants.CREEP_HARVESTER});
 	if(typeof(creep) === "string") return ({name: creep});
 }

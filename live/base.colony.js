@@ -24,11 +24,8 @@ const getState = (flag, creeps) => {
 const generateNewCreep = (creepMaker, currentState, creepsCounts, creepsList, extensionCount, controllerLevel) => {
     const extension = (creepsCounts.harvesterMinerCreeps + creepsCounts.harvesterMinerCreeps < 1) ? 0 : extensionCount;
     
-    console.log('generate new creep', creepsCounts.harvesterCreeps)
-    
     if (currentState === Constants.STATE_BUILD) {
         if (extension === 0 && creepsCounts.harvesterCreeps < 1) {
-            console.log('MAKE ME A CREEP!')
             //Generic ones to start you off
             const newCreep = creepMaker.makeHarvesterCreep(extension);
             return newCreep ? creepsList.concat([newCreep]) : creepsList;
